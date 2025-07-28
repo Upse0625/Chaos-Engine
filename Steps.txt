@@ -1,0 +1,130 @@
+Filosofía General de Mejora
+Modularidad: Organiza tu código en módulos bien definidos (renderizador, gestión de activos, escena, cámara, UI) para facilitar la expansión y el mantenimiento.
+
+Abstracción: Crea clases y interfaces para componentes como Material, Mesh, Texture, Light, etc., para desacoplar el motor de la API gráfica subyacente (OpenGL).
+
+Escalabilidad: Diseña pensando en añadir más características y complejidad en el futuro.
+
+Fase 1: Fundamentos del Realismo y Escena (Próximos Pasos)
+Actualmente, tu motor renderiza un cubo rotando con iluminación básica. Esta fase se centra en mejorar la calidad de la iluminación y la gestión de objetos.
+
+Refinar la Iluminación (Modelo Phong Completo / Transición a PBR):
+
+Lo Aprendido de Blender: Cycles usa path tracing para iluminación físicamente correcta. Eevee usa un modelo PBR (Physically Based Rendering) para tiempo real.
+
+Mejora:
+
+Implementar Phong completo: Actualmente tienes ambiental, difusa y especular. Asegúrate de que los coeficientes del material (color ambiental, difuso, especular, shininess) sean propiedades del material del objeto y se pasen al shader.
+
+Transición a PBR (Modelo "Disney Principled" o similar): Este es un salto significativo en realismo.
+
+Necesitarás: Un nuevo Fragment Shader que implemente el modelo PBR (BRDF como Cook-Torrance o Bidirectional Reflectance Distribution Function) basado en propiedades físicas como albedo (color base), metallic (metalicidad), roughness (rugosidad), ao (oclusión ambiental).
+
+Fuentes de luz: Implementa diferentes tipos de luces (puntual, direccional, foco) y permite múltiples luces en la escena.
+
+Sombras: Imprescindible para el realismo. Empieza con Shadow Mapping (sencillo y efectivo en tiempo real). Necesitarás un paso de renderizado de profundidad desde la perspectiva de cada luz.
+
+Gestión de Múltiples Objetos y Transformaciones Jerárquicas:
+
+Lo Aprendido de Blender: Blender maneja escenas complejas con miles de objetos, organizados jerárquicamente.
+
+Mejora:
+
+Clase GameObject: Ya la tienes, pero refínala para que contenga un Transform (posición, rotación, escala) y una referencia a un Mesh y un Material.
+
+Árbol de Escena/Grafo de Escena: Permite que los objetos sean hijos de otros objetos, heredando sus transformaciones. Esto es crucial para modelos complejos y para agrupar elementos (ej. un personaje con sus huesos).
+
+Instancing: Para dibujar múltiples copias del mismo objeto (ej. árboles, rocas) de manera eficiente en la GPU. glDrawElementsInstanced o glDrawArraysInstanced.
+
+Carga de Modelos 3D Complejos:
+
+Lo Aprendido de Blender: Blender exporta e importa muchos formatos.
+
+Mejora: Usa una librería como Assimp (Open Asset Import Library) para cargar formatos populares como .obj, .fbx, .gltf. Esto te permitirá importar modelos con mallas complejas, normales, coordenadas de textura y, eventualmente, esqueletos.
+
+Fase 2: Expansión Visual y Herramientas (Características Avanzadas)
+Una vez que tengas una escena con luces y objetos, puedes empezar a añadir efectos visuales y herramientas para facilitar tu trabajo.
+
+Texturizado Avanzado y Mapeo:
+
+Lo Aprendido de Blender: Blender utiliza múltiples mapas de textura para los materiales PBR (albedo, normal, metálico, rugosidad, oclusión, etc.).
+
+Mejora:
+
+Texturas Múltiples por Material: Un Material debe poder contener múltiples IDs de textura.
+
+Mapeo Normal (Normal Mapping): Usa un mapa de normales para añadir detalles de superficie sin aumentar la geometría del modelo. Esto requiere calcular el espacio tangente en el Vertex Shader.
+
+Mapeo Especular/Metálico/Rugosidad/Oclusión: Extiende tu modelo PBR para que estas propiedades provengan de mapas de textura.
+
+Skybox / Cubemap para Entornos:
+
+Lo Aprendido de Blender: Eevee utiliza sondas de luz y cubemaps para iluminación basada en imágenes (IBL).
+
+Mejora: Renderiza un skybox (cubo con texturas de cielo en sus caras) o un cubemap de entorno para simular un cielo y proporcionar una iluminación ambiental más convincente.
+
+Post-Procesado (Efectos de Pantalla Completa):
+
+Lo Aprendido de Blender: Eevee usa efectos como oclusión ambiental de espacio de pantalla (SSAO), reflejos de espacio de pantalla (SSR), bloom, desenfoque de movimiento.
+
+Mejora:
+
+Renderiza la escena a un Framebuffer Object (FBO) en lugar de directamente a la pantalla.
+
+Luego, toma la textura de color de ese FBO y renderízala a un quad que cubra toda la pantalla, aplicando efectos de post-procesado en un nuevo shader.
+
+Empieza con efectos simples como Inversión de color, Escala de grises, Bloom o Desenfoque de movimiento.
+
+Sistema de Materiales Nodales (Aspiracional):
+
+Lo Aprendido de Blender: El editor de shaders de Cycles y Eevee es nodal y muy potente. Cycles también soporta Open Shading Language (OSL).
+
+Mejora (a largo plazo): Crear un editor de materiales basado en nodos es un proyecto gigantesco. Puedes empezar por definir un sistema de materiales más flexible donde puedas cambiar fácilmente los parámetros de PBR o incluso la lógica de los shaders desde fuera del código, quizás con un archivo de configuración o un editor muy básico.
+
+Fase 3: Optimización y Escenarios Complejos (Alto Rendimiento)
+Una vez que tengas una escena visualmente rica, querrás que corra rápido.
+
+Optimización del Culling:
+
+Frustum Culling: No renderizar objetos que están completamente fuera del campo de visión de la cámara.
+
+Occlusion Culling: No renderizar objetos que están ocultos detrás de otros objetos (más avanzado, a menudo requiere técnicas como oclusión jerárquica de Z-buffer u oclusión programática).
+
+Estructuras de Aceleración (BVH / Octrees / KD-Trees):
+
+Lo Aprendido de Blender: Cycles utiliza BVH para acelerar el trazado de rayos y las consultas de intersección.
+
+Mejora: Implementa una estructura espacial (como un Octree o un KD-Tree para escenas estáticas) para organizar tus objetos. Esto acelerará las consultas de colisiones, frustum culling y futuras características como el trazado de rayos. Blender usa BVH para ray tracing.
+
+Gestión de Memoria y Streaming de Recursos:
+
+Lo Aprendido de Blender: Blender maneja grandes escenas y assets, con estrategias de gestión de memoria.
+
+Mejora: Implementa un gestor de recursos que cargue y descargue mallas y texturas de manera eficiente, evitando la duplicación y gestionando la memoria de la GPU.
+
+GPU Compute (CUDA/OpenCL/Vulkan Compute Shaders):
+
+Lo Aprendido de Blender: Cycles aprovecha intensamente CUDA, OptiX, HIP, OneAPI y Metal para el renderizado acelerado por GPU.
+
+Mejora (a largo plazo): Si tu motor crece para incluir cálculos pesados (simulaciones de partículas, físicas, o un futuro renderizado de trazado de rayos), aprender a usar Compute Shaders (con OpenGL) o Vulkan/DirectX Compute es esencial.
+
+Fase 4: Herramientas del Motor y Pipeline de Contenido
+Para que tu motor sea utilizable, necesitarás herramientas para crear y gestionar contenido.
+
+Editor Básico de Escena (In-Engine):
+
+Lo Aprendido de Blender: Blender es un editor 3D completo.
+
+Mejora: Crea una interfaz de usuario básica dentro de tu motor (usando librerías como ImGui) para:
+
+Mover, rotar y escalar objetos con el ratón.
+
+Cambiar propiedades de los materiales (color, brillo).
+
+Añadir/eliminar luces.
+
+Ver un inspector de propiedades para el objeto seleccionado.
+
+Serialización de Escenas:
+
+Mejora: Guarda el estado de tu escena (objetos, posiciones, luces, propiedades) en un formato de archivo (ej. JSON, XML o un formato binario personalizado) para que puedas cargarla más tarde.

@@ -1,0 +1,28 @@
+# Archivos y carpetas de Visual Studio
+.vs/
+*.suo
+*.user
+*.sln.docstates
+
+# Carpetas de compilación
+build/
+out/
+bin/
+obj/
+
+# Archivos de compilación
+*.ipch
+*.pch
+*.pdb
+*.lib
+*.obj
+*.ilk
+
+# Archivos ejecutables
+*.exe
+*.dll
+
+# Otros
+*.log
+*.tlog
+*.zip
